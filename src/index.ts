@@ -53,7 +53,7 @@ server.prompt(
                 role: "user",
                 content: {
                     type: "text",
-                    text: `You sent ${code}`
+                    text: `Voici le texte que vous m'avez envoyé: ${code}`
                 }
             }]
         };
