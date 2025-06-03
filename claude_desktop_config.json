@@ -2,7 +2,7 @@
     "mcpServers": {
         "trinv-server": {
             "command": "/usr/bin/node",
-            "args": ["/home/queinnec/TRINV/MCP3/dist/src/index.js"]
+            "args": ["/home/queinnec/TRINV/MCP3/dist/index.js"]
         }
     }
 }

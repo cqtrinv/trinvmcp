@@ -8,12 +8,13 @@ create.container :
 create.local :
 	jq . < package.json > /dev/null
 	-rm -rf dist
-	tsc && chmod +x dist/src/*.js
+	tsc && chmod +x dist/*.js
 
-test.local : dist/src/index.js
+test.local : dist/index.js
 	cp -p claude_desktop_config.json ~/.config/Claude/
 	tail -f ~/.config/Claude/logs/mcp.log &
 	claude-desktop
 
-dist/src/index.js :
-	tsc
+dist/index.js : src/index.ts
+	-rm -rf dist
+	tsc && chmod +x dist/*.js

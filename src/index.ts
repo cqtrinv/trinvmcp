@@ -18,16 +18,66 @@ const server = new McpServer({
     version: "0.1.0",
 });
 
-// Add an addition tool
+type County = {
+    name: string,
+    inseeid: string,
+    postalid: string,
+    departmentid: string,
+    latitude: number,
+    longitude: number
+};
+type CountyByFragmentResponse = {
+    fragment: string,
+    counties: [ County ]
+};
+
+// Add a tool
 server.tool(
-    "add",
-    { a: z.number(), b: z.number() },
-    async function ({ a, b }: { a: number; b: number }) {
-        return {
-            content: [{ type: "text", text: String(a + b) }]
-        };
+    "trinv-search-county",
+    { fragment: z.string() },
+    async function ({ fragment }: { fragment: string }) {
+        //return await search_county(fragment);
+        const url = `https://trinv.fr/api/countybyfragment.json`;
+        const response = await fetch(url, {
+            method: 'POST',
+            mode: 'cors',
+            redirect: 'follow',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ fragment })
+        });
+        if ( response.ok ) {
+            const json = await response.json() as CountyByFragmentResponse;
+            let text = '' as string;
+            if ( json.counties.length === 1 ) {
+                text = `
+Voici la commune concernée: ${json.counties[0].name}
+ainsi que son code INSEE: ${json.counties[0].inseeid}`;
+            } else {
+                text = `
+Voici les communes de France ayant ce fragment de nom:
+${json.counties.map(c => c.name)}
+`;
+            }
+            return {
+                content: [{ type: "text", text }]
+            };
+        } else {
+            console.error(response);
+            throw new Error('probleme');
+        }
     }
 );
+
+//   Allow Claude to use "trinv-search-county"
+// Questions:
+// Cherche des communes avec RIAQ dans leur nom
+//    => locmariaquer
+// Y a-t-il des communes nommées DOUS
+//    => 8 communes BEDOUS, BUROSSE-MENDOUSSE, ...
+
 
 /* Add a dynamic greeting resource
 server.resource(
@@ -45,15 +95,17 @@ server.resource(
 */
 
 server.prompt(
-    "echo-code",
-    { code: z.string() },
-    function ({ code }) {
+    "trinv-search-county",
+    { fragment: z.string() },
+    function ({ fragment }) {
         return {
             messages: [{
                 role: "user",
                 content: {
                     type: "text",
-                    text: `Voici le texte que vous m'avez envoyé: ${code}`
+                    text: `Chercher des communes en France
+dont le nom comporte, dans l'ordre, les lettres suivantes:
+${fragment}`
                 }
             }]
         };

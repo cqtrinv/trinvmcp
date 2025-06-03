@@ -19,10 +19,10 @@
         "sourceMap": true,
         
         "outDir": "./dist",
-        "rootDir": "."
+        "rootDir": "./src"
     },
     "include": [
-        "src/*.ts"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",
