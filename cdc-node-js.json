@@ -3,8 +3,7 @@
         "trinv-server": {
             "command": "/usr/bin/node",
             "args": [
-                "--experimental-transform-types",
-                "/home/queinnec/TRINV/MCP3/src/index.ts"]
+                "/home/queinnec/TRINV/MCP3/dist/index.js"]
         }
     }
 }
