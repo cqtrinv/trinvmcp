@@ -58,6 +58,10 @@ Ainsi, chercher BEURD conduit à trouver la commune de TREBEURDEN.
 Il faut cependant être spécifique car chercher, par exemple, SAINT
 mène à 4834 communes:un si grand nombre de résultats ne peut être listé.
 
+Les communes trouvées sont accompagnées de leur code INSEE, de leurs
+coordonnées (latitude, longitude). Certaines communes ont changé de
+nom ou ont été regroupées avec d'autres.
+
 Exemples de questions:
 - Quelle est la commune nommée BEURD ?
 - Dis-moi quelles sont les communes ayant DOUS dans leur nom ?
@@ -88,9 +92,11 @@ Exemples de questions:
             });
             if ( json.counties.length === 1 ) {
                 const county : County = json.counties[0];
+                // take care of .obsolete, .seealso, etc.
                 text = `
 Voici la commune concernée: ${county.name}
-ainsi que son code INSEE: ${county.inseeid}`;
+ainsi que son code INSEE: ${county.inseeid}.
+`;
             } else {
                 function formatCounty (c: County) : string {
                     return `- ${c.name} (code INSEE: ${c.inseeid}`;
@@ -110,7 +116,7 @@ ${json.counties.map(formatCounty)}
     }
 );
 
-//   Allow Claude to use "trinv-search-county"
+//   Allow Claude to use "trinv-chercher-commune"
 // Questions:
 // Cherche des communes avec RIAQ dans leur nom
 //    => locmariaquer
@@ -126,6 +132,8 @@ le plus souvent, en deux phases.
 1. Spécifier la commune qui vous intéresse
 2. Indiquer la taille (en m²) de la parcelle recherchée.
 
+Bien identifier la commune implique de connaître son code INSEE.
+
 Exemples de questions:
 - Y a t-il une parcelle de surface 247 m² dans BEDOUS
 - Je cherche une parcelle dans BEURD faisant 333 m²
@@ -135,25 +143,23 @@ Exemples de questions:
     { fragment: z.string(), area: z.number() },
     async function ({ fragment, area }: { fragment: string, area: number }) {
         fragment = fragment.toUpperCase();
-        let inseeid : string | undefined;
+        let inseeid : string | undefined =
+            county2inseeidCache.get(fragment);
         const counties = fragment2countiesCache.get(fragment);
-        if ( ! counties ) {
-            inseeid = county2inseeidCache.get(fragment);
-            if ( ! inseeid ) {
+
+        if ( ! inseeid ) {
+            if ( ! counties ) {
                 throw new Error(`Peut-être faut-il que vous m'indiquiez
 plus précisément la commune que vous cherchez.`);
-            }
-        } else if ( counties.length > 1 ) {
-            throw new Error(`Trop de communes ont ces lettres
+            } else if ( counties.length === 1 ) {
+                fragment = counties[0].name;
+                inseeid = counties[0].inseeid;
+            } else {
+                throw new Error(`Trop de communes ont ces lettres
 dans leur nom!`);
-        } else {
-            fragment = counties[0].name;
-            inseeid = counties[0].inseeid;
+            }
         }
-        if ( ! inseeid ) {
-            throw new Error(`Je ne connais pas le code INSEEID de
-la commune ${fragment}`);
-        }
+
         const url = `https://trinv.fr/api/areas.json?` +
               `inseeid=${inseeid}&` +
               `surfacemin=${area}`;
@@ -176,7 +182,8 @@ la commune ${fragment}`);
                 text = `
 Voici la référence de la parcelle cadastrale concernée: ${area.name}.
 ${area.address ? `Son adresse est ${area.address}.` : ''}
-Elle est située en [${area.latitude} ${area.longitude}]($geourl)`;
+Elle est située en [${area.latitude} ${area.longitude}]($geourl)
+`;
             } else {
                 function formatArea (area: Area): string {
                     return area.name;
@@ -196,7 +203,7 @@ ${json.areas.map(formatArea)}
     }
 );
 
-//   Allow Claude to use "trinv-search-county"
+//   Allow Claude to use "trinv-chercher-parcelle"
 // Questions:
 // Y a t-il une parcelle de surface 247 m² dans BEDOUS
 //    64104-000-A-626 Place de l'École, 64490 Bedous     # Screenshots/1.png
@@ -205,6 +212,11 @@ ${json.areas.map(formatArea)}
 // Je cherche une parcelle dans DOUS faisant 333 m²
 //    plusieurs communes avec DOUS                       # Screenshots/3.png
 // Je cherche une parcelle dans XIT                      # Screenshots/4.png
+
+// Tool trinv-localiser-parcelle
+
+
+
 
 /*
   Prompts are help, triggered by the user, to help formulating a

@@ -3,7 +3,7 @@
         "trinv-server": {
             "command": "/usr/bin/node",
             "args": [
-                "/home/queinnec/TRINV/MCP3/dist/index.js"]
+                "/home/queinnec/TRINV/MCP/dist/index.js"]
         }
     }
 }
