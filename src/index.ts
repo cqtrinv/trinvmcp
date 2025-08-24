@@ -15,7 +15,7 @@ import z from "zod";
 // Initialize the server
 const server = new McpServer({
     name: "mcptrinv",
-    version: "0.1.0",
+    version: "0.1.2",
 });
 
 type County = {
@@ -28,7 +28,7 @@ type County = {
 };
 type CountyByFragmentResponse = {
     fragment: string,
-    counties: [ County ]
+    counties: County[]
 };
 type Area = {
     name: string,
@@ -43,10 +43,10 @@ type AreasByCountyAndSurfaceResponse = {
     areamin: number,
     areamax: number,
     status?: string,
-    areas: [ Area ]
+    areas: Area[]
 };
 
-const fragment2countiesCache = new Map<string, [County]>();
+const fragment2countiesCache = new Map<string, County[]>();
 const county2inseeidCache = new Map<string, string>();
 
 // Add a tool: search counties with a fragment of their name
@@ -56,7 +56,8 @@ server.tool(
 d'un fragment de leur nom (c'est-à-dire une série de lettres consécutives).
 Ainsi, chercher BEURD conduit à trouver la commune de TREBEURDEN.
 Il faut cependant être spécifique car chercher, par exemple, SAINT
-mène à 4834 communes:un si grand nombre de résultats ne peut être listé.
+mène à 4834 communes: un si grand nombre de résultats ne peut être listé
+ni utilement, ni agréablement.
 
 Les communes trouvées sont accompagnées de leur code INSEE, de leurs
 coordonnées (latitude, longitude). Certaines communes ont changé de
@@ -84,26 +85,43 @@ Exemples de questions:
             body: JSON.stringify({ fragment })
         });
         if ( response.ok ) {
-            const json = await response.json() as CountyByFragmentResponse;
-            let text = '' as string;
+            const json : CountyByFragmentResponse = await response.json();
+            let text : string = '';
             fragment2countiesCache.set(fragment, json.counties);
             json.counties.forEach(c => {
                 county2inseeidCache.set(c.name, c.inseeid);
             });
-            if ( json.counties.length === 1 ) {
-                const county : County = json.counties[0];
+            if ( json.counties.length === 0 ) {
+		text = `# SEARCH RESULT 
+Aucune commune ne porte un nom comportant ce fragment \`${json.fragment}\`
+
+# STRUCTURED DATA
+\`\`\`json
+${JSON.stringify(json, null, 2)}
+\`\`\`
+`;
+	    } else if ( json.counties.length === 1 ) {
+                const county : County = json.counties[0] as County;
                 // take care of .obsolete, .seealso, etc.
-                text = `
+                text = `# SEARCH RESULT 
 Voici la commune concernée: ${county.name}
 ainsi que son code INSEE: ${county.inseeid}.
+
+# STRUCTURED DATA
+\`\`\`json
+${JSON.stringify(json, null, 2)}
+\`\`\`
 `;
             } else {
-                function formatCounty (c: County) : string {
-                    return `- ${c.name} (code INSEE: ${c.inseeid}`;
-                }
-                text = `
-Voici les communes de France ayant ce fragment de nom:
-${json.counties.map(formatCounty)}
+                text = `# SEARCH RESULT 
+Voici les ${json.counties.length} communes de France ayant
+ce fragment de nom \`${json.fragment}\`:
+${json.counties.map(formatCounty).join('\n')}
+
+# STRUCTURED DATA
+\`\`\`json
+${JSON.stringify(json, null, 2)}
+\`\`\`
 `;
             }
             return {
@@ -128,7 +146,7 @@ server.tool(
     "trinv-chercher-parcelle",
     `Cet outil permet de rechercher des parcelles cadastrales ayant une
 certaine surface au sein d'une commune de France. Cette recherche s'effectue,
-le plus souvent, en deux phases.
+le plus souvent, en deux phases:
 1. Spécifier la commune qui vous intéresse
 2. Indiquer la taille (en m²) de la parcelle recherchée.
 
@@ -145,15 +163,17 @@ Exemples de questions:
         fragment = fragment.toUpperCase();
         let inseeid : string | undefined =
             county2inseeidCache.get(fragment);
-        const counties = fragment2countiesCache.get(fragment);
+        const counties : County[] | undefined =
+	      fragment2countiesCache.get(fragment);
 
         if ( ! inseeid ) {
             if ( ! counties ) {
                 throw new Error(`Peut-être faut-il que vous m'indiquiez
 plus précisément la commune que vous cherchez.`);
             } else if ( counties.length === 1 ) {
-                fragment = counties[0].name;
-                inseeid = counties[0].inseeid;
+		const county = counties[0] as County;
+                fragment = county.name;
+                inseeid = county.inseeid;
             } else {
                 throw new Error(`Trop de communes ont ces lettres
 dans leur nom!`);
@@ -173,24 +193,40 @@ dans leur nom!`);
             }
         });
         if ( response.ok ) {
-            const json = await response.json() as
-               AreasByCountyAndSurfaceResponse;
-            let text = '' as string;
-            if ( json.areas.length === 1 ) {
-                const area = json.areas[0];
+            const json : AreasByCountyAndSurfaceResponse =
+		  await response.json();
+            let text : string = '';
+            if ( json.areas.length === 0 ) {
+                text = `# SEARCH RESULT
+Aucune parcelle cadastrale ne correspond à une telle surface.
+
+# STRUCTURED DATA
+\`\`\`json
+${JSON.stringify(json, null, 2)}
+\`\`\`
+`;
+            } else if ( json.areas.length === 1 ) {
+                const area = json.areas[0] as Area;
                 const geourl = `https://trinv.fr/parcelle?cadastreid=${area.name}`;
-                text = `
+                text = `# SEARCH RESULT
 Voici la référence de la parcelle cadastrale concernée: ${area.name}.
 ${area.address ? `Son adresse est ${area.address}.` : ''}
-Elle est située en [${area.latitude} ${area.longitude}]($geourl)
+Elle est située en [${area.latitude} ${area.longitude}](${geourl})
+
+# STRUCTURED DATA
+\`\`\`json
+${JSON.stringify(json, null, 2)}
+\`\`\`
 `;
             } else {
-                function formatArea (area: Area): string {
-                    return area.name;
-                }
-                text = `
+                text = `# SEARCH RESULT
 Voici les parcelles cadastrales ayant cette surface:
-${json.areas.map(formatArea)}
+${json.areas.map(formatArea).join('\n')}
+
+# STRUCTURED DATA
+\`\`\`json
+${JSON.stringify(json, null, 2)}
+\`\`\`
 `;
             }
             return {
@@ -202,6 +238,14 @@ ${json.areas.map(formatArea)}
         }
     }
 );
+
+function formatCounty (c: County) : string {
+    return `- ${c.name} (code INSEE: ${c.inseeid})`;
+}
+
+function formatArea (area: Area): string {
+    return area.name;
+}
 
 //   Allow Claude to use "trinv-chercher-parcelle"
 // Questions:

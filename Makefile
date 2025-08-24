@@ -1,27 +1,38 @@
-work :
+work : dist/index.js
 
-create.container :
-	jq . < package.json > /dev/null
-	-rm -rf dist
+create.container : upgrade.package.json
 	docker buildx build -t trinv/mcp .
 
-create.local :
-	jq . < package.json > /dev/null
-	-rm -rf dist
-	tsc && chmod +x dist/*.js
+create.local : upgrade.package.json dist/index.js
 
 MAC_CONFIG_DIR=~/Library/'Application Support'/Claude
 
-test.local : dist/index.js cdc-node-js.json
+test.local.js : dist/index.js cdc-node-js.json
 	[ -d ${MAC_CONFIG_DIR} ] && \
-	  cp -p cdc-node-js.json ${MAC_CONFIG_DIR}/claude_desktop_config.json
+	  cp -p cdc-mac-node-js.json \
+		${MAC_CONFIG_DIR}/claude_desktop_config.json
 	cp -p cdc-node-js.json ~/.config/Claude/claude_desktop_config.json
 	tail -f ~/.config/Claude/logs/mcp.log &
-	claude-desktop
+	{ which claude-desktop && claude-desktop ; } || \
+		open -a claude
 
-dist/index.js : src/index.ts
+test.local.ts : src/index.ts cdc-node-ts.json
+	-[ -d ${MAC_CONFIG_DIR} ] && \
+	  cp -p cdc-mac-node-ts.json \
+		${MAC_CONFIG_DIR}/claude_desktop_config.json
+	cp -p cdc-node-ts.json ~/.config/Claude/claude_desktop_config.json
+	tail -f ~/.config/Claude/logs/mcp.log &
+	{ which claude-desktop && claude-desktop ; } || \
+		open -a claude
+
+upgrade.package.json : 
+	jq . < package.json > /dev/null
+	npm outdated || npm update
+
+dist/index.js : upgrade.package.json src/index.ts 
 	-rm -rf dist
-	tsc && chmod +x dist/*.js
+	tsc
+	chmod +x dist/index.js
 
 save.claude.config :
 	tar czf claude-config.tgz -C ../../.config/ Claude

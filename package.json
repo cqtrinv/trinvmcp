@@ -17,11 +17,12 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@modelcontextprotocol/sdk": "1.12.1",
-        "zod": "3.25.49"
+        "@modelcontextprotocol/sdk": "1.17.4",
+        "zod": "^3.0.0"
     },
     "devDependencies": {
-        "@types/node": "^22.15.29",
+        "@types/express": "^5.0.3",
+        "@types/node": "^24.3.0",
         "typescript": "^5.8.3"
     }
 }
