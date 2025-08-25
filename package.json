@@ -1,6 +1,6 @@
 {
     "name": "mcp-trinv-server",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "MCP server to access TRINV",
     "license": "MIT",
     "author": "Christian Queinnec <gerant@trinv.fr>",
@@ -13,7 +13,7 @@
     "keywords": [
 	"mcp",
 	"model-context-protocol",
-	"france",
+	"France",
 	"communes",
 	"cadastre",
 	"parcelles"
@@ -25,12 +25,13 @@
     "files": [
         "dist/**/*",
 	"README.md",
+	"LICENSE"
     ],
     "engines": {
 	"node": ">=16.0.0"
     },
     "scripts": {
-        "build": "tsc && chmod +x dist/*.js",
+        "build": "tsc && chmod +x dist/*.js"
     },
     "dependencies": {
         "@modelcontextprotocol/sdk": "1.17.4",

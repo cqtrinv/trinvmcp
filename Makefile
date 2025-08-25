@@ -42,4 +42,5 @@ copy2bibou :
 	rsync -avu . bibou:TRINV/MCP/
 
 publish :
-	npm ///
+	jq . < package.json
+	npm publish
