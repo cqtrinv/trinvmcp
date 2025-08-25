@@ -1,4 +1,4 @@
-# mcp-trinv-server, a MCP server for TRINV
+# mcp-trinv-server, un serveur MCP pour TRINV
 
 `mcp-trinv-server` (ou MCPTRINV) est un serveur de type MCP (Model
 Context Protocol) qui est utilisé pour augmenter les ressources
@@ -27,4 +27,4 @@ d'exploitation sur lequel vous êtes, du répertoire où vous êtes.
 ## Usage
 
 Voici un [exemple de conversation](https://youtu.be/Q7Q4PMpnmSw) mené
-avec `mcp-trinv-server`.
+avec `mcp-trinv-server` et Claude.

@@ -1,10 +1,10 @@
 {
     "name": "mcp-trinv-server",
-    "version": "0.0.3",
-    "description": "MCP server to access TRINV",
+    "version": "0.0.4",
+    "description": "un serveur MCP pour accéder à TRINV",
     "license": "MIT",
     "author": "Christian Queinnec <gerant@trinv.fr>",
-    "homepage": "https://mcp.trinv.fr",
+    "homepage": "https://doc.trinv.fr/trinv-mcp-server",
     "type": "module",
     "main": "dist/index.js",
     "bin": {
