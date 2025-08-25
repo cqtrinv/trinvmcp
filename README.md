@@ -7,7 +7,7 @@ d'assistant d'Intelligence Artificielle comme Claude ou Gemini.
 MCPTRINV permet de rechercher des communes à partir d'un fragment de
 leur nom puis de rechercher des parcelles cadastrales dans une commune
 ayant une surface donnée.
-Il s'appuie sur le site [TRINV]{https://trinv.fr}.
+Il s'appuie sur le site [TRINV](https://trinv.fr).
 
 ## Outils
 
