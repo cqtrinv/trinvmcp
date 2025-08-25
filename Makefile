@@ -40,3 +40,6 @@ save.claude.config :
 
 copy2bibou :
 	rsync -avu . bibou:TRINV/MCP/
+
+publish :
+	npm ///
